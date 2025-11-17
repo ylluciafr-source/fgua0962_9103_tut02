@@ -1,4 +1,4 @@
-let maxWidth, maxHeight;
+﻿let maxWidth, maxHeight;
 let bg;           //  graphics buffer
 let mushrooms = [];
 const DESIGN_W = 1200;  // design canvas width
@@ -508,13 +508,13 @@ const PatternPainter = {
 
     //
     // make dots flow by radial animation
-        let trackIndex = 0;
+      let trackIndex = 0;
     let totalSteps = floor((angleEnd - angleStart) / trackAngleStep);
 
-    // —— 新增：时间控制，用来让点沿半径方向流动（从外往内）——
+    // New: time control to make dots flow along radius (from outer to inner)
     let tTime = cfg.time != null ? cfg.time : frameCount * 0.02;
-    let flowSpeed = cfg.flowSpeed != null ? cfg.flowSpeed : 0.8; // 越大流动越快
-    let loopRange = maxR; // 半径循环范围
+    let flowSpeed = cfg.flowSpeed != null ? cfg.flowSpeed : 0.8; // Larger value = faster flow
+    let loopRange = maxR; // Radius loop range
 
     // Draw tracks from angleStart to angleEnd
     for (let step = 0; step <= totalSteps; step++) {
@@ -525,13 +525,13 @@ const PatternPainter = {
       fill(trackColor);
 
       for (let i = 1; i <= circlesPerTrack; i++) {
-        // 原本的基础半径（从内到外排）
+        // Original base radius (arranged from inner to outer)
         let rBase = radialStep * i;
 
-        // —— 关键：让点“从外往内”流动：半径随时间减小 ——
+        // Key: make dots 'flow from outer to inner' by decreasing radius over time
         let rAnimated = rBase - tTime * flowSpeed * radialStep;
 
-        // 做一个循环包裹：小于 0 就加回到范围内
+        // Wrap around: if less than 0, add back into range
         while (rAnimated < 0) {
           rAnimated += loopRange;
         }
@@ -543,9 +543,6 @@ const PatternPainter = {
 
       trackIndex++;
     }
-
-
-
     pop();
   },
 
@@ -635,7 +632,7 @@ const PatternPainter = {
     let trackCount = opt.trackCount != null ? opt.trackCount : 9; // number of vertical dot tracks
     let rows = opt.rows != null ? opt.rows : 9; // number of dots per track
     let marginX = opt.marginX != null ? opt.marginX : width * 0.05; // horizontal margin to 2 sides
-    let jitterY = opt.jitterY != null ? opt.jitterY : height * 0.01; // vertical jitter for dot positions
+    //let jitterY = opt.jitterY != null ? opt.jitterY : height * 0.01; // vertical jitter for dot positions
     let edgeScale = opt.edgeScale != null ? opt.edgeScale : 0.5; // scale factor for dots near the edges compared with center
 
     let baseR =
@@ -661,14 +658,11 @@ const PatternPainter = {
     let stepY = height / rows; 
 
     // make dots flow by y offset animation over time
-    let tTime = opt.time != null ? opt.time : frameCount * 0.02;  // 避免和下面的 t 混名
+    let tTime = opt.time != null ? opt.time : frameCount * 0.02;  
     let flowSpeed = opt.flowSpeed != null ? opt.flowSpeed : 0.8;  // speed of flow
 
-    // 👉 用伞柄真实高度做循环长度，这样始终在 stem 区域内，不会整段空白
-    let loopH = height;
-
-    // 👉 随时间累积的纵向偏移量，然后在 loopH 内循环
-    let offsetYAnim = (tTime * flowSpeed * stepY) % loopH;
+    // Vertical offset accumulated over time and wrapped within height
+    let offsetYAnim = (tTime * flowSpeed * stepY) % height;
 
     for (let k = 0; k < trackCount; k++) { // from left to right
     let tTrack = (k + 0.5) / trackCount;
@@ -680,13 +674,13 @@ const PatternPainter = {
     let scale = lerp(1.0, edgeScale, dist);
 
     for (let i = 1; i <= rows; i++) { // from top to bottom
-        // 原本“第 i 行”的基础高度（局部坐标）
+        // Original base height for the i-th row (local coordinates)
         let yBase = stepY * i;
 
-        // 👉 加上时间偏移以后，在 [0, loopH) 范围内循环
-        let yWrapped = (yBase + offsetYAnim) % loopH;
+        // After adding time offset, wrap within [0, height)
+        let yWrapped = (yBase + offsetYAnim) % height;
 
-        // 再平移回伞柄的局部坐标（bb.miny 为顶部）
+        // Then translate back to stem local coordinates (bb.miny is the top)
         // Use noise to add vertical jitter
         let noiseShake = opt.noiseShake ?? height * 0.03;
         let n = noise(k * 0.15, i * 0.15, frameCount * 0.02);
@@ -718,8 +712,6 @@ const PatternPainter = {
     let tt    = opt.time != null ? opt.time : frameCount * 0.1; 
     let amp  = opt.noiseAmp != null ? opt.noiseAmp : 0.5;      
     let freq = opt.noiseFreq != null ? opt.noiseFreq : 0.1;    
-
-
     let rawCol = opt.dotColor || deps.accent1 || {h: 40, s: 80, b: 30, a: 100};
     let dc = color(rawCol.h, rawCol.s, rawCol.b, rawCol.a ?? 100);
     noStroke();
@@ -1468,7 +1460,6 @@ class Mushroom {
     }
   }
 }
-
 
 // ---------- TYPE_LIBRARY / SCENE_LAYOUT / makeMushroomFromLayout ----------
 
@@ -2266,29 +2257,29 @@ function drawCapReplica(cx, cy, W, H, time = 0) {
     const rings = 20;
 
     for (let r = 0; r < rings; r++) {
-    // 原本的“第几条环”的位置（0 = 最外，1 = 最内）
+    // Original ring index position (0 = outermost, 1 = innermost)
     let t0 = r / (rings - 1);
 
-    // 给 t 加一个随时间变化的偏移，让轨道整体从外往内流动
-    // 0.08 是速度，可以自己调大/调小
+    // Add time-based offset to t so rings flow from outer to inner
+    // 0.08 is speed; adjust to make it faster/slower
     let tMove = (t0 - time * 0.08) % 1;
     if (tMove < 0) tMove += 1;
 
-    // 用“流动后”的 tMove 决定这一条环的半径
+    // Use flowed tMove to determine this ring's radius
     let rr = lerp(H * 0.2, H * 1.6, tMove);
 
-    // 点的数量仍然用原来的 t0，这样外圈点少、内圈点多的特征不变
+    // Number of dots still uses original t0, preserving fewer dots on outer rings and more on inner
     let dots = int(lerp(22, 56, t0));
 
     for (let k = 0; k < dots; k++) {
-        // ★ 角度 a 保持原来的写法，不再加时间偏移：
+        // ★ Keep angle a as originally written; do not add time offset:
         let a = lerp(
         aStart - 0.04,
         aEnd + 0.04,
         k / dots
         );
 
-        // 这一部分仍然沿着“树脂轨道”的形状来画
+        // This part still draws along the resin-track shape
         let x =
         cx + (rr * cos(a)) * (W / H) * 0.46;
         let y =
@@ -2297,7 +2288,7 @@ function drawCapReplica(cx, cy, W, H, time = 0) {
         2.2 * sin(k * 0.7 + r * 0.95) +
         yBend(a);
 
-        // 大小可以顺便做一点小呼吸（如果你想要可以保留，不要就删掉 scale 那两行）
+        // Size does a subtle breathing effect (keep the two scale lines to keep it, remove them otherwise)
         let baseD =
         lerp(16, 7.5, t0) *
         (0.92 + 0.14 * noise(r * 0.3, k * 0.6));
@@ -2308,9 +2299,6 @@ function drawCapReplica(cx, cy, W, H, time = 0) {
         circle(x, y, d);
     }
     }
-
-
-
   noStroke();
   fill("#7C3A6B");
   const fringeStep = 8;
@@ -2402,8 +2390,8 @@ function drawCapReplica(cx, cy, W, H, time = 0) {
     ellipse(
       0,
       0,
-      random(26, 44) + sin(frameCount * 0.05 + i) * 2,
-      random(16, 26) + sin(frameCount * 0.05 + i * 1.3) * 2
+      random(26, 44) + sin(frameCount * 0.5 + i) * (2 + random(-1, 1)), //Use 2 + random(-1, 1) to vary the amplitude slightly
+      random(16, 26) + sin(frameCount * 0.5 + i) * (2 + random(-1, 1))
     );
     pop();
   }
@@ -2516,17 +2504,16 @@ function drawStemUniform(time = 0) {
     const x0 = colXs[c],
       isCenter = x0 === 0;
     for (let j = 0; j < rows; j++) {
-        // 原始竖直位置（0~1，从上到下）
+        // Original vertical position (0~1, top to bottom)
         let v0 = j / (rows - 1);
 
-        // 加上时间偏移，实现从上到下循环流动
+        // Add time offset to create looping downward flow
         let v = (v0 + time * flowSpeed) % 1;
-        if (v < 0) v += 1;
 
-        // 用 v 映射回实际 y（从 -H 到 bottomExtra-2）
+        // Map v back to actual y (from -H to bottomExtra-2)
         const y = lerp(-H, bottomExtra - 2, v);
 
-        // tW 可以直接用 v，当作“柄上高度比例”
+        // tW can use v directly as 'height proportion along the stem'
         const tW = v;
         const half = halfWidthAt(tW);
 
@@ -2595,7 +2582,7 @@ function setup() {
 }
 
 function mousePressed() {
-  // ==== 屏幕坐标 -> 设计坐标 ====
+  // ==== Screen coords -> design coords ====
   const sx = width  / DESIGN_W;
   const sy = height / DESIGN_H;
   const s  = min(sx, sy);
@@ -2604,13 +2591,13 @@ function mousePressed() {
   const mx = (mouseX - offsetX) / s;
   const my = (mouseY - offsetY) / s;
 
-  // ==== 循环检查每个蘑菇 ====
+  // ==== Check each mushroom in loop ====
   for (let m of mushrooms) {
-    // 1) 转换坐标到蘑菇本地坐标系 (反向变换)
+    // 1) Convert to mushroom local coordinates (inverse transform)
     let lx = mx - m.anchor.x;
     let ly = my - m.anchor.y;
 
-    // 反旋转 (注意：m.rot 是蘑菇绘制时的旋转角)
+    // Undo rotation (note: m.rot is the mushroom drawing rotation)
     if (m.rot) {
       let cosA = cos(-m.rot);
       let sinA = sin(-m.rot);
@@ -2620,7 +2607,7 @@ function mousePressed() {
       ly = ry;
     }
 
-    // 反缩放
+    // Undo scaling
     lx /= m.scale;
     ly /= m.scale;
 
@@ -2642,18 +2629,18 @@ function mousePressed() {
     break;
     }
   }
-      // ======== Hit test large mushroom（简单版：设计坐标 + 两个矩形） ========
+      // ======== Hit test large mushroom (simple): design coords + two rectangles ========
     {
-        const cx = DESIGN_W * 0.35;  // 大蘑菇锚点（和 draw 时一致）
+        const cx = DESIGN_W * 0.35;  // Big mushroom anchor (same as in draw)
         const cy = DESIGN_H * 0.75;
 
-        // ① 伞盖矩形（比真实伞盖略小一点，不要太夸张）
+        // ① Cap rectangle (slightly smaller than real cap, don't exaggerate)
         const capLeft   = cx - 420;
         const capRight  = cx + 420;
         const capTop    = cy - 880;
         const capBottom = cy - 520;
 
-        // ② 柄矩形（窄一点，从伞下到柄底）
+        // ② Stem rectangle (narrower, from under the cap to stem bottom)
         const stemLeft   = cx - 140;
         const stemRight  = cx + 140;
         const stemTop    = cy - 700;
@@ -2673,12 +2660,8 @@ function mousePressed() {
     }
 
   }
-
-
-
-
-
-function draw() {
+  
+  function draw() {
     // ========= Background =========
     image(bg, 0, 0, width, height);  // Full-screen background
 
@@ -2706,10 +2689,10 @@ function draw() {
         bigMushroom.pulseScale = s;
     }
 
-    // 更新纹理流动时间
+    // Update texture flow time
     bigMushroom.flowTime += 0.015;
 
-    // 渲染蘑菇
+    // Render mushrooms
     translate(DESIGN_W * 0.35, DESIGN_H * 0.75);
     rotate(radians(-7));
     scale(0.7 * bigMushroom.pulseScale);
@@ -2729,5 +2712,4 @@ function windowResized() {
   buildBackground(); // Rebuild full-screen background
   redraw();
 }
-
 

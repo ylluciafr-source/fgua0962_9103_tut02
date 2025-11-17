@@ -1,0 +1,11 @@
+{
+  "name": "fgua0962_9103_tut02",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^2.8.8"
+  },
+  "scripts": {
+    "format": "prettier --write \"sketch.js\""
+  }
+}
